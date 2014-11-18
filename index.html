@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>MoveMine 2.0 Help</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<style>
+	body {font-size:16px;}
+	</style>
+  </head>
+  <body>
+  	<div id="main_container">
+        <h1> MoveMine 2.0 Manual </h1>
+		<hr>
+		<div id = "functions">
+		<h2> Overview </h2>
+		<p>In this package, we include following functions:</p>
+		<ul>
+		<li><a href="#distance"> Distance Calculation:</a> This function calculates the pairwise Euclidean distance between selected objects.</li>
+		<li><a href="#significance"> Attraction and Avoidance Mining:</a> This function computes the significance value for attraction and avoidance relationship between two moving objects.</li>
+		<li><a href="#following"> Following Mining:</a> This function detects all the time intervals that following relationships occur.</li>
+		<li><a href="#plot"> Plot Meeting Places:</a> This function plots trajectories, meeting places, spatially close locations between a pair of moving objects. </li>
+        </ul>
+		
+		</div>
+		
+		<hr>
+		<div id = "distance">
+		<h2>Mining Function: Distance Calculation</h2>
+		<p>This function computes the pairwise distance matrix (in meters) for the individuals selected. The distance is pairwise Euclidean point distance normalized by trajectory length. Given two trajectories R= r<sub>1</sub>r<sub>2</sub>...r<sub>n</sub> and S =s<sub>1</sub>s<sub>2</sub>...s<sub>n</sub></b>, the average distance is computed as: </p>
+		<p>aveDist(R,S) = 1/n * &#8721 <sub>i</sub> <sup>n</sup> dist(r<sub>i</sub>,s<sub>i</sub>), where dist() is Euclidean distance. </p>
+		</div>
+		<hr></hr>
+		<div id = "significance">
+		<h2> Mining Function: Attraction/Avoidance Mining</h2>
+		<p>This function computes the significance value of the interactions (attraction/avoidance) between two individuals. If the value <b> approaches 1</b>, then there is a significant <b> attraction relationship </b> between the two. If the value <b> approaches 0</b>, then there is a significant <b> avoidance relationship </b> between the two. </p>
+		
+		<p>
+		<h3> Parameters </h3>
+		<ul>
+		<li><b># Rounds:</b> This parameter specifies the number of permutations computed to estimate significant values. More rounds will be more accurate in the estimation of the significant value but slower in computation.  </li>
+		<li><b>Dist thres:</b> This parameter specifies the distance constraint to determine whether two points are spatially close (i.e. a meeting event).  </li>
+		</ul>
+		</p>
+
+		<p> <h3>Method</h3> The meeting frequency alone can hardly quantify the strength of the relationship between two objects without considering the background movements. Thus, we propose a probabilistic model to consider the mobility background between two objects. The intuition is that if two movement sequences R and S are independent (any meeting event between them could happen randomly), then the meeting frequency between random permuted R and S should remain similar to the actual meeting frequency. Otherwise, R and S are not independent.
+		
+		To determine whether there is attraction or avoidance as well as the degree, we test the significance of observing the actual meeting frequency under the independent hypothesis. The test statistics is computed using permutation test. 
+			
+		
+		</p>
+		<img src="html/images/permutation.png" height="400" > <h4>Figure 1. Illustration of the method.</h4>
+		<p>
+		Figure 1 illustrates the process of permutation test. In each permutation, we compute the permuted meeting frequency. A permuted meeting frequency histogram can be generated for all possible permutations. Then we use the histogram (background) as the test statistics to compute the significance of observing the actual meeting frequency. More specifically, if 95% of the permuted meeting frequencies are less than the actual meeting frequency, then we say there is a significant attraction relationship of 0.95 between the two (because they meeting much more than expected). Similarly, we can quantify the avoidance relationship as well.
+		
+		In practice, it is impossible to compute the n! permutations. Thus, we only use limited number of permutations to proximate the background distribution.
+        </p>
+            
+        <h3> Reference </h3>
+		<p>For more detail about the method, please refer to the paper: <br></br> <a href="http://faculty.ist.psu.edu/jessieli/Publications/VLDB14-ZLi.pdf" >Zhenhui Li, Bolin Ding, Fei Wu, Tobias Kin Hou Lei, Roland Kays, and Margaret Crofoot, Attraction and Avoidance Detection from Movements , Proc. 2014 Int. Conf. on Very Large Data Bases (VLDB'14/PVLDB), Hangzhou, China, Sept. 2014.</a></p>
+		</div>
+		<hr></hr>
+		<div id = "following">
+		<h2>Mining Function: Following Mining</h2>
+		<p>	This function mines the time intervals that following relationships occur between two individuals. By default, top-10 intervals will be output. It is recommended to apply this function on dataset that has sampling rate higher than 1 minute.
+		</p>
+        <h3> Parameters </h3>
+        <ul>
+		<li><b>Time thres:</b> This parameter specifies the time constraint to determine whether two points are temporally close.  </li>
+		<li><b>Dist thres:</b> This parameter specifies the distance constraint to determine whether two points are spatially close.  </li>
+		<li><b>Min Interval Length:</b> This parameter specifies the minimum interval length for visualization. *This parameter is NOT a parameter of the method but for post-processing.  </li>
+		</ul>
+		
+		<p><h3>Method</h3> Supposedly, we have two trajectories R= r<sub>1</sub>r<sub>2</sub>...r<sub>n</sub> and S =s<sub>1</sub>s<sub>2</sub>...s<sub>n</sub></b>, where R follows S . If r<sub>i</sub> follows S,  r<sub>i</sub> should be close to some point s<sub>j</sub> in S both spatially and temporally (determined by the two parameters).
+		We call s<sub>j</sub> that is the closest point to r<sub>i</sub> the <i>Local Minimizer to r<sub>i</sub> </i>.
+		Intuitively, the follower should be close to its leader's previous location with a time lag.
+		Thus, we define an indicator function f(i) on each timestamp i that shows whether the local minimizer s<sub>j</sub>	has a later timestamp then r<sub>i</sub>. If so, we call such location pair (s<sub>j</sub>,r<sub>i</sub>) a <i>following pair</i>.
+		Figure 2 shows a toy example and the indicator function for the example. In the example, R follows S in time [3:11]. Green lines connect points in R to their local minimizers. Accordingly, we can compute the f(i) for R by checking whether s<sub>j</sub>	has a later timestamp then r<sub>i</sub> (forms a following pair). The corresponding values for the indicator function is shown at right.
+		</p>
+		<div>
+<img src="html/images/local.png" height="200" style="float: left;"> <p>*Green line indicates local minimizer. </p>
+<img src="html/images/table.png" height="150" >
+<h4>Figure 2. A toy example of following pairs. R (blue) follows S (red) in the time interval [3:11].</h4></div>
+		<p>
+		A significant following time interval should have more following pairs compared with the expectation. The expectation is computed under the assumption that if R and S are simply staying together or moving together. There is 50% chance for a following pair to occur at one time stamp. Thus, we define the following score for an interval I as g(I) = f(I)-0.5*|I|.
+		For the example, the following score for [3:11] is 7-0.5*9 = 2.5.
+		The problem of finding following time interval is equivalent to the Maximum Sum Segment problem.
+		</p>
+        <h3> Reference </h3>
+		<p>For more detail about the method, please refer to the paper: <br></br> <a href="http://faculty.ist.psu.edu/jessieli/Publications/ICDM13-ZLi.pdf" >Zhenhui Li, Fei Wu, and Margaret Crofoot, Mining Following Relationships in Movement Data , Proc. 2013 IEEE Int. Conf.on Data Mining (ICDM'13), Dallas, TX, Dec. 2013. </a></p>
+		
+</div>
+	</div>
+      <hr></hr>
+	  <div id = "plot">
+		<h2>Mining Function: Plot Meeting Places</h2>
+		<p>This function plots the trajectories of two objects. In addition, it also plots all the meeting places and spatially close locations between the pair. </p>
+		<h3> Parameters </h3>
+        <ul>
+		<li><b>timeThres:</b> This parameter specifies the time constraint to determine whether a meeting event happens.  </li>
+		<li><b>distThres:</b> This parameter specifies the distance constraint to determine whether two locations are spatially close.  </li>
+		</ul>
+		</div>
+		<hr></hr>
+      <div id = "interpolate">
+          <h2>Data Preprocessing - Linear Interpolation</h2>
+          <p> Distance function and attract/avoid mining function require linear interpolation to make data evenly sampled. Users can specify parameters for <i>linear interpolation</i> in this panel. There are two parameters for interpolation:</p>
+          <ul>
+              <li><b>Gap:</b>  &nbsp; This parameter specifies the target sampling rate after interpolation. if Gap(min) = 10, then the sampling rate will be 1 sample per 10 minutes after interpolation. </li>
+              <li><b>ThresGap:</b>&nbsp; This parameter specifies the constraint on time gap between two consecutive timestamps from the original data. If ThresGap(hr)=1, then for two consecutive locations that have time gap larger than 1 hour, the locations in between will not be interpolated. This threshold is to handle large period of missing data.</li>
+          </ul>
+          Users can use the average sampling rate as a reference when tune those two parameters.
+      </div>
+      <hr></hr>
+  </body>
+</html>
